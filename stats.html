@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>실시간 신호 — 한국 금융계산기 가짜문</title>
+<style>
+  :root{ --bg:#0f1115; --card:#1a1d24; --line:#2a2e38; --fg:#eef1f6; --sub:#9aa3b2; --accent:#3b82f6; --accent2:#22c55e; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    background:var(--bg); color:var(--fg); line-height:1.5; padding:24px; }
+  .wrap{ max-width:720px; margin:0 auto; }
+  h1{ font-size:22px; font-weight:800; display:flex; align-items:center; gap:10px; }
+  .live{ width:9px; height:9px; border-radius:50%; background:var(--accent2); box-shadow:0 0 0 0 rgba(34,197,94,.6); animation:pulse 1.6s infinite; }
+  @keyframes pulse{ 70%{ box-shadow:0 0 0 10px rgba(34,197,94,0);} 100%{ box-shadow:0 0 0 0 rgba(34,197,94,0);} }
+  .meta{ color:var(--sub); font-size:13px; margin:6px 0 22px; }
+  .cards{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:14px; }
+  @media(max-width:560px){ .cards{ grid-template-columns:1fr; } }
+  .c{ background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .c .lab{ font-size:13px; color:var(--sub); }
+  .c .big{ font-size:38px; font-weight:900; margin-top:4px; }
+  .c .sub{ font-size:12px; color:var(--sub); margin-top:6px; }
+  .c.hl .big{ color:var(--accent2); }
+  table{ width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line);
+    border-radius:14px; overflow:hidden; margin-top:8px; }
+  th,td{ padding:13px 16px; text-align:left; font-size:15px; border-bottom:1px solid var(--line); }
+  th{ color:var(--sub); font-size:13px; font-weight:700; }
+  tr:last-child td{ border-bottom:none; }
+  td.n{ text-align:right; font-weight:800; font-variant-numeric:tabular-nums; }
+  .win{ color:var(--accent2); }
+  .sec-title{ font-size:14px; color:var(--sub); margin:24px 0 4px; font-weight:700; }
+  .foot{ color:var(--sub); font-size:12px; margin-top:20px; }
+  .err{ color:#ff7a7a; font-size:14px; margin-top:12px; }
+  button{ background:#232733; color:var(--fg); border:1px solid var(--line); border-radius:9px;
+    padding:8px 14px; font-size:13px; cursor:pointer; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1><span class="live"></span> 실시간 신호</h1>
+    <div class="meta">한국 금융계산기 가짜문 · <span id="updated">불러오는 중…</span> · <button id="refresh">새로고침</button> · 15초마다 자동</div>
+
+    <div class="cards">
+      <div class="c"><div class="lab">👀 방문 (페이지뷰)</div><div class="big" id="pv">–</div><div class="sub" id="pvsub"></div></div>
+      <div class="c"><div class="lab">👆 버튼 클릭</div><div class="big" id="ck">–</div><div class="sub" id="cksub"></div></div>
+      <div class="c hl"><div class="lab">✉️ 이메일 신청 (진짜 신호)</div><div class="big" id="sg">–</div><div class="sub" id="sgsub"></div></div>
+    </div>
+
+    <div class="sec-title">계산기별 (이메일 신청 순 = 승자 후보)</div>
+    <table>
+      <thead><tr><th>계산기</th><th style="text-align:right">클릭</th><th style="text-align:right">신청</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="3" style="color:#9aa3b2">불러오는 중…</td></tr></tbody>
+    </table>
+
+    <div id="err" class="err"></div>
+    <div class="foot">
+      * 집계 함수(get_stats)로 <b>숫자만</b> 읽어옵니다. 이메일 등 원본 데이터는 노출되지 않습니다.<br/>
+      * 판정: 이메일 <b>신청</b>이 몰린 계산기 = 승자. 클릭만 많고 신청 0 = 거짓 양성.
+    </div>
+  </div>
+
+<script>
+  const SUPABASE_URL = "https://btgawrddlqskldewisbh.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable__RM8EQFBJ2vJTKYX6XtabA_hA8XtNzD";
+  const NAMES = { jeonse:"🏠 전세↔월세", dsr:"💳 대출·DSR", cheongyak:"🎯 청약가점", tax:"🧾 양도세" };
+  const $ = id => document.getElementById(id);
+
+  async function load(){
+    try{
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_stats`, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json", "apikey":SUPABASE_ANON_KEY, "Authorization":`Bearer ${SUPABASE_ANON_KEY}` },
+        body:"{}"
+      });
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      const d = await r.json();
+      $('err').textContent = "";
+
+      $('pv').textContent = d.totals.pageviews;
+      $('ck').textContent = d.totals.clicks;
+      $('sg').textContent = d.totals.signups;
+      $('pvsub').textContent = `오늘 ${d.today.pageviews} · 하루평균 ${d.per_day.pageviews}`;
+      $('cksub').textContent = `오늘 ${d.today.clicks} · 하루평균 ${d.per_day.clicks}`;
+      $('sgsub').textContent = `오늘 ${d.today.signups} · 하루평균 ${d.per_day.signups}`;
+
+      const tb = $('rows'); tb.innerHTML = "";
+      const list = d.by_calc || [];
+      if(!list.length){ tb.innerHTML = `<tr><td colspan="3" style="color:#9aa3b2">아직 신호 없음</td></tr>`; }
+      list.forEach((x,i)=>{
+        const tr = document.createElement('tr');
+        const win = (i===0 && x.signups>0) ? ' class="win"' : '';
+        tr.innerHTML = `<td${win}>${NAMES[x.calc]||x.calc}${i===0&&x.signups>0?' 👑':''}</td><td class="n">${x.clicks}</td><td class="n${win? ' win':''}">${x.signups}</td>`;
+        tb.appendChild(tr);
+      });
+
+      const dt = new Date();
+      $('updated').textContent = `${dt.getHours().toString().padStart(2,'0')}:${dt.getMinutes().toString().padStart(2,'0')}:${dt.getSeconds().toString().padStart(2,'0')} 기준 (활동 ${d.days_active}일)`;
+    }catch(e){
+      $('err').textContent = "불러오기 실패: " + e.message;
+    }
+  }
+  $('refresh').onclick = load;
+  load();
+  setInterval(load, 15000);
+</script>
+</body>
+</html>
