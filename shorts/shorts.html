@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>햄인팩토리 — 쇼츠 플레이어</title>
+<style>
+  :root{ --accent:#3b82f6; --accent2:#22c55e; --warn:#f59e0b; --fg:#f4f7fc; --sub:#aab3c2; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; background:#05070c; overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif; }
+  /* 9:16 무대 (세로 쇼츠). 창에 맞춰 꽉 차게 */
+  .stage{ position:relative; margin:0 auto; height:100vh; aspect-ratio:9/16; max-width:100vw;
+    background:radial-gradient(120% 80% at 50% 0%, #16223c 0%, #0a1020 45%, #05070c 100%);
+    color:var(--fg); overflow:hidden; }
+  .wm{ position:absolute; top:26px; left:0; right:0; text-align:center; font-size:20px; font-weight:800;
+    letter-spacing:1px; color:#fff; opacity:.85; z-index:20; }
+  .wm b{ color:var(--accent2); }
+  .pad{ position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center;
+    align-items:center; padding:0 56px; text-align:center; }
+
+  /* 문제(사연) 장면 */
+  .tag{ font-size:26px; font-weight:800; color:var(--warn); border:2px solid var(--warn);
+    border-radius:999px; padding:8px 22px; margin-bottom:34px; opacity:0; }
+  .line{ font-size:46px; font-weight:800; line-height:1.4; letter-spacing:-1px; margin:14px 0;
+    opacity:0; transform:translateY(24px); }
+  .line.frust{ color:#ff7a7a; }
+  .punch{ font-size:96px; font-weight:900; color:var(--warn); opacity:0; transform:scale(.5);
+    text-shadow:0 8px 40px rgba(245,158,11,.5); }
+
+  /* 해결 장면 */
+  .solve-head{ font-size:40px; font-weight:800; margin-bottom:30px; opacity:0; transform:translateY(20px); }
+  .solve-head .pt{ color:var(--accent2); }
+  .card{ width:100%; max-width:560px; background:#121723; border:1px solid #283143; border-radius:26px;
+    padding:34px 30px; opacity:0; transform:translateY(40px) scale(.96); box-shadow:0 30px 80px rgba(0,0,0,.5); }
+  .card .ctitle{ font-size:30px; font-weight:800; margin-bottom:24px; display:flex; align-items:center; gap:12px; }
+  .row{ display:flex; justify-content:space-between; align-items:center; padding:16px 18px; margin:12px 0;
+    background:#0c111b; border:1px solid #222b3b; border-radius:14px; opacity:0; transform:translateX(-16px); }
+  .row .k{ font-size:26px; color:var(--sub); }
+  .row .v{ font-size:30px; font-weight:800; }
+  .calcbtn{ margin-top:22px; width:100%; padding:20px; border:none; border-radius:16px; background:var(--accent);
+    color:#fff; font-size:30px; font-weight:800; transform:scale(1); }
+  .calcbtn.press{ animation:press .35s ease; }
+  @keyframes press{ 50%{ transform:scale(.93); filter:brightness(1.2);} }
+  .result{ margin-top:26px; padding:26px; border-radius:18px; background:linear-gradient(135deg,#0e3a22,#0c2a3f);
+    border:1px solid var(--accent2); text-align:center; opacity:0; transform:translateY(20px); }
+  .result .rl{ font-size:26px; color:#9fe7bf; margin-bottom:8px; }
+  .result .rv{ font-size:64px; font-weight:900; color:#fff; line-height:1.1; }
+  .result .rs{ font-size:24px; color:var(--sub); margin-top:10px; }
+  .relief{ font-size:40px; font-weight:800; margin-top:34px; opacity:0; transform:translateY(20px); }
+
+  /* CTA */
+  .cta{ position:absolute; left:0; right:0; bottom:190px; text-align:center; opacity:0; transform:translateY(24px); z-index:20; }
+  .cta .big{ font-size:46px; font-weight:900; }
+  .cta .big .pt{ color:var(--accent2); }
+  .cta .url{ display:inline-block; margin-top:18px; font-size:30px; font-weight:800; color:#0b1018;
+    background:var(--accent2); padding:14px 26px; border-radius:14px; }
+  .cta .sub{ margin-top:16px; font-size:26px; color:var(--sub); }
+
+  .note{ position:absolute; bottom:24px; left:0; right:0; text-align:center; font-size:18px; color:#56607a; z-index:20; }
+  .help{ position:fixed; top:8px; left:8px; font-size:13px; color:#3a4256; z-index:50; font-family:monospace; }
+
+  .show{ opacity:1 !important; transform:none !important; transition:all .6s cubic-bezier(.2,.8,.2,1); }
+  .show.punch{ transition:all .5s cubic-bezier(.2,1.4,.3,1); }
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+  <div class="help">← → 사연 전환 · R 재생 · F 전체화면</div>
+  <div class="stage" id="stage">
+    <div class="wm">🐹 햄인<b>팩토리</b></div>
+
+    <!-- 문제 장면 -->
+    <div class="pad" id="sceneProblem">
+      <div class="tag" id="tag">실화 같은 이야기</div>
+      <div id="lines"></div>
+      <div class="punch" id="punch">그래서!</div>
+    </div>
+
+    <!-- 해결 장면 -->
+    <div class="pad hidden" id="sceneSolve">
+      <div class="solve-head" id="solveHead">그래서 <span class="pt">이 계산기</span>를 써봤어요</div>
+      <div class="card" id="card">
+        <div class="ctitle" id="cardTitle"></div>
+        <div id="rows"></div>
+        <button class="calcbtn" id="calcbtn">계산하기</button>
+        <div class="result" id="result">
+          <div class="rl" id="rl"></div>
+          <div class="rv" id="rv">0</div>
+          <div class="rs" id="rs"></div>
+        </div>
+      </div>
+      <div class="relief" id="relief"></div>
+    </div>
+
+    <div class="cta" id="cta">
+      <div class="big">너도 <span class="pt">1초</span>면 끝나 👇</div>
+      <div class="url">프로필 링크 클릭</div>
+      <div class="sub" id="ctaSub"></div>
+    </div>
+
+    <div class="note">*화면은 예시입니다 · 곧 출시</div>
+  </div>
+
+<script>
+// ─────────────────────────────────────────────────────────
+//  사연 데이터 (엔진 1개 · 데이터만 교체)  ?s=0,1,2... 로 선택
+// ─────────────────────────────────────────────────────────
+const URL_SHORT = "goalsgo1.github.io/korea-calc-waitlist";
+const STORIES = [
+  { // 0
+    emoji:"🏠", calc:"전세↔월세 전환 계산기",
+    problem:["이사 갈 집 주인이 갑자기","\"반전세로 돌리자\"고 했다","보증금 1억을 월세로 바꾸면 월 얼마지…?","부동산은 자기 유리한 말만 하고",["나 혼자선 도저히 계산이 안 됐다","frust"]],
+    rows:[["보증금","1억 원"],["전월세 전환율","5.5%"]],
+    rl:"바꾸면 월세는", rv:45.8, dec:1, unit:"만원", rs:"보증금 1억 → 월세 환산",
+    relief:"이걸 미리 알았으면 😮‍💨"
+  },
+  { // 1
+    emoji:"🏠", calc:"전세↔월세 전환 계산기",
+    problem:["월세 60만원이 너무 부담됐다","보증금을 더 넣고 월세를 낮추고 싶었다","근데 얼마를 더 넣어야","월세가 얼마나 줄지 감이 안 왔다",["집주인한테 묻기도 눈치보였다","frust"]],
+    rows:[["추가 보증금","5,000만 원"],["전월세 전환율","5.5%"]],
+    rl:"월세가", rv:37, dec:0, unit:"만원", rs:"월 60 → 37만원 (23만원 절약)",
+    relief:"진작 넣을걸 😭"
+  },
+  { // 2
+    emoji:"💳", calc:"대출 한도·DSR 계산기",
+    problem:["전셋집 계약 직전","은행이 \"한도가 안 나온다\"고 했다","분명 연봉은 되는데 왜…?","DSR? 그게 뭔데",["은행 3곳이 다 다르게 말해 멘붕","frust"]],
+    rows:[["연봉","5,000만 원"],["기존 대출 월상환","50만 원"]],
+    rl:"추가로 가능한 한도", rv:1.8, dec:1, unit:"억", rs:"DSR 40% 기준 추정",
+    relief:"미리 알았으면 안 깨졌지 😮‍💨"
+  },
+  { // 3
+    emoji:"💳", calc:"대출 한도·DSR 계산기",
+    problem:["신용대출 받았더니","주담대 한도가 확 줄었다","둘이 무슨 상관이지?","영끌하려는데 도대체 얼마까지…",["아무도 정확히 안 알려줬다","frust"]],
+    rows:[["연봉","6,000만 원"],["신용대출 잔액","3,000만 원"]],
+    rl:"주담대 가능액", rv:2.3, dec:1, unit:"억", rs:"기존 대출 반영 추정",
+    relief:"순서가 중요했네 😵"
+  },
+  { // 4
+    emoji:"🎯", calc:"청약 가점 계산기",
+    problem:["청약 넣으려는데","내 가점이 몇 점인지 모르겠다","무주택 기간은 언제부터 세지?","부양가족에 부모님도 들어가나?",["떨어지면 1순위 날려서 무서웠다","frust"]],
+    rows:[["무주택 기간","8년"],["부양가족","2명"],["통장 가입","10년"]],
+    rl:"내 청약 가점", rv:45, dec:0, unit:"점", rs:"84점 만점 기준",
+    relief:"이제 전략이 보인다 👀"
+  },
+  { // 5
+    emoji:"🧾", calc:"양도세·종부세 계산기",
+    problem:["집 한 채 팔려는데","양도세가 얼마인지 감도 안 왔다","2년 보유? 거주? 1주택 비과세?","세무사 상담은 비싸고",["잘못 신고하면 가산세 폭탄","frust"]],
+    rows:[["양도차익","2억 원"],["보유·거주","3년 / 2년"]],
+    rl:"예상 양도세", rv:1250, dec:0, unit:"만원", rs:"1주택 장특공제 가정",
+    relief:"미리 계산해두니 든든 😌"
+  },
+];
+
+// ── 재생 엔진 ──
+const S = STORIES[ Math.max(0, Math.min(STORIES.length-1, +(new URLSearchParams(location.search).get('s')||0))) ];
+const $ = id => document.getElementById(id);
+let timers = [];
+const after = (ms, fn) => timers.push(setTimeout(fn, ms));
+const clearAll = () => { timers.forEach(clearTimeout); timers = []; };
+
+function buildLines(){
+  const wrap = $('lines'); wrap.innerHTML = '';
+  S.problem.forEach(item=>{
+    const txt = Array.isArray(item) ? item[0] : item;
+    const cls = Array.isArray(item) ? item[1] : '';
+    const d = document.createElement('div');
+    d.className = 'line ' + (cls||'');
+    d.textContent = txt;
+    wrap.appendChild(d);
+  });
+}
+function buildRows(){
+  $('cardTitle').textContent = S.emoji + ' ' + S.calc;
+  const wrap = $('rows'); wrap.innerHTML='';
+  S.rows.forEach(([k,v])=>{
+    const r=document.createElement('div'); r.className='row';
+    r.innerHTML = `<span class="k">${k}</span><span class="v">${v}</span>`;
+    wrap.appendChild(r);
+  });
+  $('rl').textContent = S.rl;
+  $('rs').textContent = S.rs;
+  $('relief').textContent = S.relief;
+  $('ctaSub').textContent = URL_SHORT;
+}
+function countUp(el, target, dec, unit){
+  const dur=1100, t0=performance.now();
+  function step(now){
+    const p=Math.min(1,(now-t0)/dur);
+    const e=1-Math.pow(1-p,3);
+    el.textContent = (target*e).toFixed(dec) + unit;
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function play(){
+  clearAll();
+  // 초기화
+  $('sceneSolve').classList.add('hidden');
+  $('sceneProblem').classList.remove('hidden');
+  buildLines(); buildRows();
+  ['tag','punch','solveHead','card','result','relief','cta'].forEach(id=>$(id).classList.remove('show'));
+  document.querySelectorAll('.line,.row').forEach(e=>e.classList.remove('show'));
+  $('rv').textContent='0'; $('calcbtn').classList.remove('press');
+
+  const lines=[...document.querySelectorAll('.line')];
+  // 문제 장면
+  after(300, ()=>$('tag').classList.add('show'));
+  let t=900;
+  lines.forEach((ln,i)=>{ after(t, ()=>ln.classList.add('show')); t += 1500; });
+  after(t+200, ()=>$('punch').classList.add('show'));   // 그래서!
+
+  // 해결 장면 전환
+  const solveAt = t+1700;
+  after(solveAt, ()=>{
+    $('sceneProblem').classList.add('hidden');
+    $('sceneSolve').classList.remove('hidden');
+    $('solveHead').classList.add('show');
+  });
+  after(solveAt+500, ()=>$('card').classList.add('show'));
+  const rows=[...document.querySelectorAll('.row')];
+  let rt=solveAt+1100;
+  rows.forEach(r=>{ after(rt, ()=>r.classList.add('show')); rt+=600; });
+  after(rt+200, ()=>$('calcbtn').classList.add('press'));
+  after(rt+550, ()=>{ $('result').classList.add('show'); countUp($('rv'), S.rv, S.dec, S.unit); });
+  after(rt+1700, ()=>$('relief').classList.add('show'));
+  after(rt+2400, ()=>$('cta').classList.add('show'));   // 끝 프레임 유지
+}
+
+// 컨트롤
+addEventListener('keydown', e=>{
+  const sp=new URLSearchParams(location.search); let s=+(sp.get('s')||0);
+  if(e.key==='ArrowRight'){ sp.set('s',(s+1)%STORIES.length); location.search=sp; }
+  if(e.key==='ArrowLeft'){ sp.set('s',(s-1+STORIES.length)%STORIES.length); location.search=sp; }
+  if(e.key.toLowerCase()==='r') play();
+  if(e.key.toLowerCase()==='f'){ if(!document.fullscreenElement) $('stage').requestFullscreen?.(); else document.exitFullscreen?.(); }
+});
+addEventListener('click', play);
+play();
+</script>
+</body>
+</html>
