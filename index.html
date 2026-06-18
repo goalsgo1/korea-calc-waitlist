@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>한국 부동산·금융 계산기 — 곧 출시</title>
+<meta name="description" content="전세·청약·대출·세금, 한국 실정에 딱 맞춘 계산기. 출시 알림을 신청하세요." />
+<style>
+  :root{ --bg:#0f1115; --card:#1a1d24; --line:#2a2e38; --fg:#eef1f6; --sub:#9aa3b2; --accent:#3b82f6; --accent2:#22c55e; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif; background:var(--bg); color:var(--fg); line-height:1.6; -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:760px; margin:0 auto; padding:0 20px; }
+  header{ padding:64px 0 32px; text-align:center; }
+  .badge{ display:inline-block; font-size:13px; color:var(--accent2); border:1px solid var(--accent2); border-radius:999px; padding:4px 12px; margin-bottom:20px; }
+  h1{ font-size:30px; font-weight:800; letter-spacing:-0.5px; }
+  h1 .pt{ color:var(--accent); }
+  header p{ color:var(--sub); margin-top:14px; font-size:16px; }
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; padding:8px 0 36px; }
+  @media (max-width:560px){ .grid{ grid-template-columns:1fr; } h1{ font-size:24px; } }
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:20px; display:flex; flex-direction:column; gap:10px; }
+  .card .emoji{ font-size:26px; }
+  .card h3{ font-size:18px; font-weight:700; }
+  .card p{ color:var(--sub); font-size:14px; flex:1; }
+  .btn{ appearance:none; border:none; cursor:pointer; background:var(--accent); color:#fff; font-weight:700; font-size:15px; border-radius:10px; padding:12px; transition:.15s; }
+  .btn:hover{ filter:brightness(1.1); }
+  .btn.req{ background:#232733; color:var(--fg); border:1px solid var(--line); }
+  .btn.req[data-voted="1"]{ background:var(--accent2); color:#06270f; }
+  .votes{ font-size:12px; color:var(--sub); text-align:center; min-height:16px; }
+  footer{ text-align:center; color:var(--sub); font-size:13px; padding:24px 0 64px; }
+  /* modal */
+  .ov{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; padding:20px; }
+  .ov.on{ display:flex; }
+  .modal{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:26px; width:100%; max-width:400px; }
+  .modal h2{ font-size:19px; margin-bottom:6px; }
+  .modal p{ color:var(--sub); font-size:14px; margin-bottom:16px; }
+  .modal input{ width:100%; background:var(--bg); border:1px solid var(--line); color:var(--fg); border-radius:10px; padding:13px; font-size:15px; margin-bottom:12px; }
+  .modal .btn{ width:100%; }
+  .ok{ color:var(--accent2); font-size:14px; text-align:center; }
+  .x{ float:right; color:var(--sub); cursor:pointer; font-size:20px; line-height:1; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <span class="badge">● 출시 준비 중</span>
+      <h1>한국 부동산·금융, <span class="pt">계산은 여기서</span></h1>
+      <p>전세·청약·대출·세금 — 해외 계산기엔 없는 <b>한국 실정 그대로</b>.<br/>가장 필요한 계산기에 <b>출시 알림</b>을 신청하세요.</p>
+    </header>
+
+    <div class="grid" id="grid">
+      <div class="card">
+        <div class="emoji">🏠</div>
+        <h3>전세 ↔ 월세 전환</h3>
+        <p>전월세 전환율로 보증금↔월세 환산하고 적정성까지 판단.</p>
+        <button class="btn req" data-calc="jeonse" data-name="전세↔월세 전환">🔔 출시 알림 받기</button>
+        <div class="votes" data-votes="jeonse"></div>
+      </div>
+      <div class="card">
+        <div class="emoji">💳</div>
+        <h3>대출 한도·DSR</h3>
+        <p>연봉·기존대출로 DSR과 받을 수 있는 한도를 한눈에.</p>
+        <button class="btn req" data-calc="dsr" data-name="대출 한도·DSR">🔔 출시 알림 받기</button>
+        <div class="votes" data-votes="dsr"></div>
+      </div>
+      <div class="card">
+        <div class="emoji">🎯</div>
+        <h3>청약 가점</h3>
+        <p>무주택기간·부양가족·통장기간으로 청약 가점 자동 계산.</p>
+        <button class="btn req" data-calc="cheongyak" data-name="청약 가점">🔔 출시 알림 받기</button>
+        <div class="votes" data-votes="cheongyak"></div>
+      </div>
+      <div class="card">
+        <div class="emoji">🧾</div>
+        <h3>양도세·종부세</h3>
+        <p>보유·거주기간, 다주택 여부로 부동산 세금 추정.</p>
+        <button class="btn req" data-calc="tax" data-name="양도세·종부세">🔔 출시 알림 받기</button>
+        <div class="votes" data-votes="tax"></div>
+      </div>
+    </div>
+
+    <footer>가장 많이 신청된 계산기부터 먼저 만듭니다 · © 2026</footer>
+  </div>
+
+  <div class="ov" id="ov">
+    <div class="modal">
+      <span class="x" id="x">×</span>
+      <div id="form">
+        <h2 id="mtitle">출시 알림 신청</h2>
+        <p>출시되면 이메일로 가장 먼저 알려드려요. 스팸 없음.</p>
+        <input type="email" id="email" placeholder="이메일 주소" />
+        <button class="btn" id="submit">신청하기</button>
+      </div>
+      <div id="done" style="display:none">
+        <h2>신청 완료 🎉</h2>
+        <p class="ok">출시되면 가장 먼저 알려드릴게요!</p>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ── 설정: Supabase 정보를 채우세요 (없으면 콘솔에만 기록되는 데모 모드로 동작) ──
+  const SUPABASE_URL = "https://btgawrddlqskldewisbh.supabase.co";  // ✅
+  const SUPABASE_ANON_KEY = "sb_publishable__RM8EQFBJ2vJTKYX6XtabA_hA8XtNzD";  // ✅ publishable (client-safe)
+  const TABLE = "waitlist";
+
+  async function log(type, calc, email){
+    const row = { type, calc, email: email||null, ua: navigator.userAgent, ref: document.referrer||null };
+    if(!SUPABASE_URL || !SUPABASE_ANON_KEY){ console.log("[demo] signal:", row); return true; }
+    try{
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json", "apikey":SUPABASE_ANON_KEY, "Authorization":`Bearer ${SUPABASE_ANON_KEY}`, "Prefer":"return=minimal" },
+        body: JSON.stringify(row)
+      });
+      return r.ok;
+    }catch(e){ console.warn(e); return false; }
+  }
+
+  const ov = document.getElementById("ov");
+  let curCalc=null, curName=null;
+
+  document.querySelectorAll(".btn.req").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      curCalc=b.dataset.calc; curName=b.dataset.name;
+      log("click", curCalc);                       // 1차 신호: 관심 클릭
+      b.dataset.voted="1";
+      document.getElementById("mtitle").textContent = `'${curName}' 출시 알림 신청`;
+      document.getElementById("form").style.display="block";
+      document.getElementById("done").style.display="none";
+      document.getElementById("email").value="";
+      ov.classList.add("on");
+    });
+  });
+
+  document.getElementById("x").onclick = ()=> ov.classList.remove("on");
+  ov.onclick = (e)=>{ if(e.target===ov) ov.classList.remove("on"); };
+
+  document.getElementById("submit").onclick = async ()=>{
+    const email = document.getElementById("email").value.trim();
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ alert("이메일을 확인해주세요"); return; }
+    await log("signup", curCalc, email);            // 2차 신호: 진짜 수요(이메일 제출)
+    document.getElementById("form").style.display="none";
+    document.getElementById("done").style.display="block";
+  };
+</script>
+</body>
+</html>
